@@ -63,15 +63,18 @@ async def test_stats_response_structure():
 @pytest.mark.asyncio
 async def test_stats_total_messages():
     """Test that total_messages reflects inserted count."""
+    import uuid
+    unique_id = uuid.uuid4().hex[:8]
+    
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # Get initial count
         response_before = await client.get("/stats")
         initial_total = response_before.json()["total_messages"]
         
-        # Insert new messages
-        await insert_test_message(client, "stat-total-001", "+919876543210", "2025-01-15T10:00:00Z")
-        await insert_test_message(client, "stat-total-002", "+919876543210", "2025-01-15T10:01:00Z")
+        # Insert new messages with unique IDs
+        await insert_test_message(client, f"stat-total-{unique_id}-001", "+919876543210", "2025-01-15T10:00:00Z")
+        await insert_test_message(client, f"stat-total-{unique_id}-002", "+919876543210", "2025-01-15T10:01:00Z")
         
         # Get new count
         response_after = await client.get("/stats")
