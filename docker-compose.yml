@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: lyftr_webhook_api
+    ports:
+      - "8000:8000"
+    environment:
+      - WEBHOOK_SECRET=testsecret
+      - DATABASE_URL=sqlite:////data/app.db
+      - LOG_LEVEL=INFO
+    volumes:
+      # Map the local 'data' folder to '/data' inside the container
+      # This ensures app.db is saved on your Mac, not lost inside Docker
+      - ./data:/data
+    restart: always
