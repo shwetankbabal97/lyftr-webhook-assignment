@@ -1,0 +1,15 @@
+# 1. Python Junk
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 2. Environment Variables (SECRETS!)
+.env
+
+# 3. Database (Local Data)
+*.db
+*.sqlite3
+/data
+
+# 4. Docker Junk
+.pytest_cache/

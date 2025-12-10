@@ -23,6 +23,10 @@ COPY --from=builder /install /usr/local
 # Copy our application code
 COPY app /app/app
 
+# Copy tests
+COPY tests /app/tests
+COPY pytest.ini /app/
+
 # Create a directory for the database (Volume mount point)
 RUN mkdir -p /data
 

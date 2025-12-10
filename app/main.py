@@ -1,6 +1,7 @@
 import time
 import uuid
 import logging
+import aiosqlite
 from fastapi import FastAPI, Request, Response, HTTPException, Header
 from contextlib import asynccontextmanager
 import hmac
@@ -147,7 +148,8 @@ async def readiness_probe():
     """
     try:
         # Try to run a simple query
-        async with aiosqlite.connect(settings.DATABASE_URL) as db:
+        from app.storage import get_db_path
+        async with aiosqlite.connect(get_db_path()) as db:
             await db.execute("SELECT 1")
         return {"status": "ready"}
     except Exception:

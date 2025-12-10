@@ -1,5 +1,4 @@
-from ast import alias
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
