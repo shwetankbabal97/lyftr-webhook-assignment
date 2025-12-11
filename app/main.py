@@ -113,8 +113,12 @@ async def log_requests(request: Request, call_next):
 async def verify_signature(request: Request, body_bytes: bytes):
     """
     Calculates HMAC-SHA256 and compares it with X-Signature header.
-    Raises 401 if invalid.
+    Raises 401 if invalid or if no secret is configured.
     """
+    # If no secret is configured, reject all requests
+    if not settings.WEBHOOK_SECRET:
+        raise HTTPException(status_code=401, detail="Webhook secret not configured")
+    
     # Get the header
     x_signature = request.headers.get("X-Signature")
     if not x_signature:
@@ -186,8 +190,34 @@ async def receive_webhook(request: Request):
     # we can use pydantic argument (payload: WebhookPayload) directly
     # because we already consumed the body stream to get bytes.
     try:
-        json_data = json.loads(body_bytes)
-        payload = WebhookPayload(**json_data) # validate with Pydantic
+        # Handle empty body
+        if not body_bytes:
+            request.state.result = "validation_error"
+            raise HTTPException(status_code=422, detail="Empty request body")
+        
+        # Decode bytes to string (handle non-UTF8)
+        try:
+            body_str = body_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            request.state.result = "validation_error"
+            raise HTTPException(status_code=422, detail="Invalid UTF-8 encoding")
+        
+        # Parse JSON
+        try:
+            json_data = json.loads(body_str)
+        except json.JSONDecodeError as e:
+            request.state.result = "validation_error"
+            raise HTTPException(status_code=422, detail=f"Invalid JSON: {str(e)}")
+        
+        # Validate that json_data is a dict (not list, string, etc.)
+        if not isinstance(json_data, dict):
+            request.state.result = "validation_error"
+            raise HTTPException(status_code=422, detail="Request body must be a JSON object")
+        
+        # Validate with Pydantic
+        payload = WebhookPayload(**json_data)
+    except HTTPException:
+        raise
     except Exception as e:
         request.state.result = "validation_error"
         raise HTTPException(status_code=422, detail=str(e))
